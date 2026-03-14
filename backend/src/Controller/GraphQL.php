@@ -1,0 +1,106 @@
+<?php
+
+namespace App\Controller;
+
+use GraphQL\GraphQL as GraphQLBase;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Schema;
+use GraphQL\Type\SchemaConfig;
+use Throwable;
+use App\GraphQL\Types\CategoryType;
+use App\GraphQL\Types\AttributeItemType;
+use App\GraphQL\Types\AttributeType;
+use App\GraphQL\Types\ProductType;
+use App\GraphQL\Resolvers\CategoryResolver;
+use App\GraphQL\Resolvers\ProductResolver;
+use App\GraphQL\Resolvers\OrderResolver;
+use App\GraphQL\Types\OrderType;
+use App\GraphQL\Types\OrderItemInputType;
+
+class GraphQL
+{
+    public static function handle()
+    {
+        $attributeItemType = new AttributeItemType();
+        $attributeType = new AttributeType($attributeItemType);
+        $categoryType = new CategoryType();
+        $productType = new ProductType($attributeType);
+
+        try {
+            $queryType = new ObjectType([
+                'name' => 'Query',
+                'fields' => [
+                    'categories' => [
+                        'type' => Type::listOf($categoryType),
+                        'resolve' => fn () => CategoryResolver::all(),
+                    ],
+                    'products' => [
+                        'type' => Type::listOf($productType),
+                        'resolve' => fn () => ProductResolver::all(),
+                    ],
+                    'categoryProducts' => [
+                        'type' => Type::listOf($productType),
+                        'args' => [
+                            'category' => Type::nonNull(Type::string()),
+                        ],
+                        'resolve' => fn ($root, $args) => ProductResolver::byCategoryId($args['category']),
+                    ],
+                    'product' => [
+                        'type' => $productType,
+                        'args' => [
+                            'id' => Type::nonNull(Type::id()),
+                        ],
+                        'resolve' => fn ($root, $args) => ProductResolver::getProductById($args['id']),
+                    ],
+                ],
+            ]);
+
+            $orderType = new OrderType();
+            $orderItemInputType = new OrderItemInputType();
+
+            $mutationType = new ObjectType([
+                'name' => 'Mutation',
+                'fields' => [
+                    'placeOrder' => [
+                        'type' => $orderType,
+                        'args' => [
+                            'items' => Type::nonNull(Type::listOf($orderItemInputType)),
+                            'totalPrice' => Type::nonNull(Type::float()),
+                        ],
+                        'resolve' => fn ($root, $args) => OrderResolver::place($args),
+                    ],
+                ],
+            ]);
+
+            $schema = new Schema(
+                (new SchemaConfig())
+                ->setQuery($queryType)
+                ->setMutation($mutationType)
+            );
+
+            $rawInput = file_get_contents('php://input');
+            $input = json_decode($rawInput, true);
+            $query = $input['query'] ?? null;
+            $variables = $input['variables'] ?? null;
+
+            $result = GraphQLBase::executeQuery($schema, $query, null, null, $variables);
+            $output = $result->toArray();
+        } catch (Throwable $e) {
+            http_response_code(500);
+            header('Content-Type: application/json; charset=UTF-8');
+            echo json_encode([
+                'error' => [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                ],
+            ]);
+            exit;
+        }
+
+        header('Content-Type: application/json; charset=UTF-8');
+        return json_encode($output);
+    }
+}
