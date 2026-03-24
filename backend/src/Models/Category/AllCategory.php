@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Category;
 
 class AllCategory extends AbstractCategory
 {
@@ -11,5 +11,4 @@ class AllCategory extends AbstractCategory
             []
         ];
     }
-
 }

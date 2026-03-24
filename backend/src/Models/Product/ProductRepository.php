@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Product;
 
 use App\Database;
+use App\Models\Category\CategoryFactory;
 
 class ProductRepository
 {
@@ -21,7 +22,6 @@ class ProductRepository
 
             $products = [];
             foreach ($productsData as $productData) {
-
                 $product = ProductFactory::create($productData);
                 $product->loadRelations();
                 $products[] = $product->toArray();
@@ -36,7 +36,6 @@ class ProductRepository
     public function findById($id): ?array
     {
         try {
-
             $stmt = $this->pdo->prepare("SELECT * FROM products WHERE id = ?");
             $stmt->execute([$id]);
             $productData = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -44,7 +43,6 @@ class ProductRepository
             if (!$productData) {
                 return null;
             }
-
 
             $product = ProductFactory::create($productData);
             $product->loadRelations();

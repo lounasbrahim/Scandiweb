@@ -2,22 +2,22 @@
 
 namespace App\GraphQL\Resolvers;
 
-use App\Database;
+use App\Models\Category\CategoryRepository;
 
 class CategoryResolver
 {
-    public static function all(): array
+    private static ?CategoryRepository $repository = null;
+
+    private static function getRepository(): CategoryRepository
     {
-        try {
-
-            $pdo = Database::connect();
-            $stmt = $pdo->query("SELECT id, name FROM categories");
-            $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-            return $result;
-        } catch (\Throwable $e) {
-            return [['id' => 0, 'name' => 'DB Error: ' . $e->getMessage()]];
+        if (self::$repository === null) {
+            self::$repository = new CategoryRepository();
         }
+        return self::$repository;
     }
 
+    public static function all(): array
+    {
+        return self::getRepository()->findAll();
+    }
 }

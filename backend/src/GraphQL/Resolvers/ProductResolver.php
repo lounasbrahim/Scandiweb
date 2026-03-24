@@ -2,7 +2,7 @@
 
 namespace App\GraphQL\Resolvers;
 
-use App\Models\ProductRepository;
+use App\Models\Product\ProductRepository;
 
 class ProductResolver
 {

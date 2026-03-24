@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Category;
 
 use App\Database;
+use App\Models\Product\ProductFactory;
 
 abstract class AbstractCategory
 {
@@ -26,7 +27,6 @@ abstract class AbstractCategory
         $productsData = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return $this->transformProducts($productsData);
-
     }
 
     protected function transformProducts(array $productsData): array

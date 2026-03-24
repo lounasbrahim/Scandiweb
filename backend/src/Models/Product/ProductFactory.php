@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Product;
 
 class ProductFactory
 {
     public static function create(array $productData): AbstractProduct
     {
-
         return match (strtolower($productData['category'] ?? '')) {
             'clothes' => new ClothesProduct($productData),
             'tech' => new TechProduct($productData),
@@ -14,6 +13,5 @@ class ProductFactory
                 "Unknown product category: " . ($productData['category'] ?? 'none')
             )
         };
-
     }
 }

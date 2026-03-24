@@ -2,25 +2,22 @@
 
 namespace App\GraphQL\Resolvers;
 
-use App\Database;
+use App\Models\Order\OrderRepository;
 
 class OrderResolver
 {
-    public static function place($args)
+    private static ?OrderRepository $repository = null;
+
+    private static function getRepository(): OrderRepository
     {
-        $pdo = Database::connect();
+        if (self::$repository === null) {
+            self::$repository = new OrderRepository();
+        }
+        return self::$repository;
+    }
 
-        $items = json_encode($args['items']);
-        $total = $args['totalPrice'];
-
-        $stmt = $pdo->prepare("INSERT INTO orders (items, total_price) VALUES (?, ?)");
-        $stmt->execute([$items, $total]);
-
-        return [
-            'id' => $pdo->lastInsertId(),
-            'items' => $items,
-            'total_price' => $total,
-            'created_at' => date('Y-m-d H:i:s')
-        ];
+    public static function place($args): array
+    {
+        return self::getRepository()->save($args);
     }
 }
